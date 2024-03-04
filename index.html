@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menu List</title>
 </head>
+
 <body>
     <h1>Menu List</h1>
     <table id="menu-table">
@@ -13,34 +15,130 @@
                 <th>Product</th>
                 <th>Price</th>
                 <th>Quantity</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody id="menu-list"></tbody>
     </table>
+
+    <h2>Cart</h2>
+    <table id="cart-table">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="cart-list"></tbody>
+    </table>
+
     <script>
         function getMenus() {
             fetch('http://localhost:9000/menus')
-            .then(response => response.json())
-            .then(data => {
-                const menuList = document.getElementById('menu-list');
-                menuList.innerHTML = '';
-
-                data.forEach(menu => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
+                .then(response => response.json())
+                .then(data => {
+                    const menuList = document.getElementById('menu-list');
+                    menuList.innerHTML = '';
+                    if (data.length === 0) {
+                        const row = document.createElement('tr');
+                        row.innerHTML = '<td colspan="4">Menu is empty</td>';
+                        menuList.appendChild(row);
+                    } else {
+                        data.forEach(menu => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
                         <td>${menu.Product}</td>
                         <td>${menu.Price}</td>
                         <td>${menu.Quantity}</td>
+                        <td><button onclick="addToCart('${menu.Product}', ${menu.Price})">Add to Cart</button></td>
                     `;
-                    menuList.appendChild(row);
-                });
-            })
-            .catch(error => console.error('Error fetching menus:', error));
+                            menuList.appendChild(row);
+                        });
+                    }
+                })
+                .catch(error => console.error('Error fetching menus:', error));
         }
 
-        document.addEventListener("DOMContentLoaded", function() {
+        function addToCart(product, price) {
+            fetch('http://localhost:9000/add-to-cart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    Product: product,
+                    Price: price
+                }),
+            })
+                .then(response => {
+                    if (response.ok) {
+                        getCart();
+                    } else {
+                        console.error('Error adding to cart:', response.statusText);
+                    }
+                })
+                .catch(error => console.error('Error adding to cart:', error));
+        }
+
+        function removeFromCart(product, row) {
+            fetch('http://localhost:9000/remove-from-cart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    Product: product
+                }),
+            })
+                .then(response => {
+                    if (response.ok) {
+                        getCart(row);
+                    } else {
+                        console.error('Error removing from cart:', response.statusText);
+                    }
+                })
+                .catch(error => console.error('Error removing from cart:', error));
+        }
+
+        function getCart(rowToRemove) {
+            fetch('http://localhost:9000/get-cart')
+                .then(response => response.json())
+                .then(data => {
+                    const cartList = document.getElementById('cart-list');
+                    cartList.innerHTML = '';
+
+                    if (data.length === 0) {
+                        const row = document.createElement('tr');
+                        row.innerHTML = '<td colspan="4">Cart is empty</td>';
+                        cartList.appendChild(row);
+                    } else {
+                        data.forEach(item => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                        <td>${item.Product}</td>
+                        <td>${item.Price}</td>
+                        <td>${item.Quantity}</td>
+                        <td><button onclick="removeFromCart('${item.Product}', ${rowToRemove})">Remove</button></td>
+                    `;
+                            cartList.appendChild(row);
+                        });
+                    }
+
+                    if (rowToRemove !== undefined) {
+                        const row = document.getElementById(`row-${rowToRemove}`);
+                        row.remove();
+                    }
+                })
+                .catch(error => console.error('Error fetching cart:', error));
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
             getMenus();
+            getCart();
         });
     </script>
 </body>
+
 </html>

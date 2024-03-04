@@ -38,7 +38,6 @@
             .catch(error => console.error('Error fetching menus:', error));
         }
 
-        // เรียกใช้ getMenus เมื่อหน้าเว็บโหลดเสร็จ
         document.addEventListener("DOMContentLoaded", function() {
             getMenus();
         });

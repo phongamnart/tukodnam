@@ -34,12 +34,14 @@ func main() {
 		log.Fatal(err)
 	}
 	db.AutoMigrate(&Menu{})
-    db.AutoMigrate(&Cart{})
+	db.AutoMigrate(&Cart{})
 
 	http.HandleFunc("/menus", getMenus)
 	http.HandleFunc("/add-to-cart", addToCartHandler)
 	http.HandleFunc("/remove-from-cart", removeFromCartHandler)
 	http.HandleFunc("/get-cart", getCartHandler)
+	http.HandleFunc("/clear-cart", clearCartHandler)
+	http.HandleFunc("/place-order", placeOrderHandler)
 
 	allowedHeaders := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"})
 	allowedOrigins := handlers.AllowedOrigins([]string{"*"})
@@ -50,14 +52,18 @@ func main() {
 	log.Fatal(http.ListenAndServe(":9000", cors(http.DefaultServeMux)))
 }
 
+// get menu form db
 func getMenus(w http.ResponseWriter, r *http.Request) {
 	var menus []Menu
+	//select * from table
 	db.Find(&menus)
 	json.NewEncoder(w).Encode(menus)
 }
 
+// add product to cart
 func addToCartHandler(w http.ResponseWriter, r *http.Request) {
 	var product Menu
+	//error read request body
 	if err := json.NewDecoder(r.Body).Decode(&product); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -80,6 +86,7 @@ func addToCartHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	existingProduct.Quantity++
+	//insert into db
 	db.Save(&existingProduct)
 	w.WriteHeader(http.StatusOK)
 }
@@ -106,8 +113,37 @@ func removeFromCartHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// get cart to db
 func getCartHandler(w http.ResponseWriter, r *http.Request) {
 	var cartItems []Cart
 	db.Find(&cartItems)
 	json.NewEncoder(w).Encode(cartItems)
+}
+
+// clear cart
+func clearCartHandler(w http.ResponseWriter, r *http.Request) {
+	db.Exec("DELETE FROM carts")
+	w.WriteHeader(http.StatusOK)
+}
+
+//place order
+func placeOrderHandler(w http.ResponseWriter, r *http.Request) {
+	var total float64
+	var cartItems []Cart
+	db.Find(&cartItems)
+
+	// Calculate total amount
+	for _, item := range cartItems {
+		total += item.Price * float64(item.Quantity)
+	}
+
+	// Clear the cart
+	db.Delete(&Cart{})
+
+	summary := map[string]interface{}{
+		"total": total,
+		"items": cartItems,
+	}
+
+	json.NewEncoder(w).Encode(summary)
 }

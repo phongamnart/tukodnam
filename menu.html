@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu list</title>
+</head>
+
+<body>
+    <h1>Menu List</h1>
+    <table id="menu-table">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="menu-list"></tbody>
+    </table><br><br>
+    <a href="cart.html"><button>Cart</button></a>
+    <script>
+        function getMenus() {
+            fetch('http://localhost:9000/menus')
+                .then(response => response.json())
+                .then(data => {
+                    const menuList = document.getElementById('menu-list');
+                    menuList.innerHTML = '';
+                    if (data.length === 0) {
+                        const row = document.createElement('tr');
+                        row.innerHTML = '<td colspan="4">Menu is empty</td>';
+                        menuList.appendChild(row);
+                    } else {
+                        data.forEach(menu => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                        <td>${menu.Product}</td>
+                        <td>${menu.Price}</td>
+                        <td>${menu.Quantity}</td>
+                        <td><button onclick="addToCart('${menu.Product}', ${menu.Price})">Add to Cart</button></td>
+                    `;
+                            menuList.appendChild(row);
+                        });
+                    }
+                })
+                .catch(error => console.error('Error fetching menus:', error));
+        }
+
+        function getCart(rowToRemove) {
+            fetch('http://localhost:9000/get-cart')
+                .then(response => response.json())
+                .then(data => {
+                    const cartList = document.getElementById('cart-list');
+                    cartList.innerHTML = '';
+
+                    if (data.length === 0) {
+                        const row = document.createElement('tr');
+                        row.innerHTML = '<td colspan="4">Cart is empty</td>';
+                        cartList.appendChild(row);
+                    } else {
+                        data.forEach(item => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                        <td>${item.Product}</td>
+                        <td>${item.Price}</td>
+                        <td>${item.Quantity}</td>
+                        <td><button onclick="removeFromCart('${item.Product}', ${rowToRemove})">Remove</button></td>
+                    `;
+                            cartList.appendChild(row);
+                        });
+                    }
+
+                    if (rowToRemove !== undefined) {
+                        const row = document.getElementById(`row-${rowToRemove}`);
+                        row.remove();
+                    }
+                })
+                .catch(error => console.error('Error fetching cart:', error));
+        }
+
+        function addToCart(product, price) {
+            fetch('http://localhost:9000/add-to-cart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    Product: product,
+                    Price: price
+                }),
+            })
+                .then(response => {
+                    if (response.ok) {
+                        getCart();
+                    } else {
+                        console.error('Error adding to cart:', response.statusText);
+                    }
+                })
+                .catch(error => console.error('Error adding to cart:', error));
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            getMenus();
+        });
+    </script>
+</body>
+
+</html>

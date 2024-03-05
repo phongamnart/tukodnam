@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tukodnam</title>
+</head>
+
+<body>
+    <h1>Order Summary</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                </tr>
+            </thead>
+            <tbody id="order-items"></tbody>
+        </table>
+        <p>Total: <span id="total-price"></span></p>
+        <a href="cart.html"><button>Back to Cart</button></a>
+
+    <script>
+        function placeOrder() {
+            const order = {
+                items: [],
+                total: 0
+            };
+
+            fetch('http://localhost:9000/get-cart')
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(item => {
+                        order.items.push({ product: item.Product, price: item.Price, quantity: item.Quantity });
+                        order.total += item.Price * item.Quantity;
+                    });
+
+                    const orderItemsTable = document.getElementById('order-items');
+                    orderItemsTable.innerHTML = '';
+                    order.items.forEach(item => {
+                        const row = orderItemsTable.insertRow();
+                        const productCell = row.insertCell(0);
+                        const priceCell = row.insertCell(1);
+                        const quantityCell = row.insertCell(2);
+
+                        productCell.textContent = item.product;
+                        priceCell.textContent = item.price;
+                        quantityCell.textContent = item.quantity;
+
+                    });
+
+                    const totalPriceElement = document.getElementById('total-price');
+                    totalPriceElement.textContent = order.total.toFixed(2);
+
+
+                })
+                .catch(error => console.error('Error fetching cart:', error));
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            placeOrder();
+        });
+    </script>
+</body>
+
+</html>

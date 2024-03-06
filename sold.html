@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sold</title>
+</head>
+
+<body>
+    <h1>Sold</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Quantity</th>
+            </tr>
+        </thead>
+        <tbody id="sold-items"></tbody>
+    </table><br><br>
+    <a href="menu.html"><button>Back to Menu</button></a>
+
+    <script>
+        function getSoldHandler() {
+            fetch('http://localhost:9000/sold')
+                .then(response => response.json())
+                .then(data => {
+                    const soldItem = document.getElementById('sold-items');
+                    soldItem.innerHTML = '';
+                    if (data.length === 0) {
+                        const row = document.createElement('tr');
+                        row.innerHTML = '<td colspan="4">Sold is empty</td>';
+                        soldItem.appendChild(row);
+                    } else {
+                        data.forEach(order => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                        <td>${order.Product}</td>
+                        <td>${order.Price}</td>
+                        <td>${order.Quantity}</td>
+                    `;
+                            soldItem.appendChild(row);
+                        });
+                    }
+                })
+                .catch(error => console.error('Error fetching menus:', error));
+        }
+        document.addEventListener("DOMContentLoaded", function () {
+            getSoldHandler();
+        });
+
+    </script>
+</body>
+
+</html>

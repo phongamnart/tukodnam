@@ -24,6 +24,13 @@ type Cart struct {
 	Quantity int
 }
 
+type Order struct {
+	ID       uint `gorm:"primaryKey"`
+	Product  string
+	Price    float64
+	Quantity int
+}
+
 var db *gorm.DB
 
 func main() {
@@ -35,6 +42,7 @@ func main() {
 	}
 	db.AutoMigrate(&Menu{})
 	db.AutoMigrate(&Cart{})
+	db.AutoMigrate(&Order{})
 
 	http.HandleFunc("/menus", getMenus)
 	http.HandleFunc("/add-to-cart", addToCartHandler)
@@ -42,6 +50,8 @@ func main() {
 	http.HandleFunc("/get-cart", getCartHandler)
 	http.HandleFunc("/clear-cart", clearCartHandler)
 	http.HandleFunc("/place-order", placeOrderHandler)
+	http.HandleFunc("/pay", payHandler)
+	http.HandleFunc("/sold", getSoldHandler)
 
 	allowedHeaders := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"})
 	allowedOrigins := handlers.AllowedOrigins([]string{"*"})
@@ -90,7 +100,8 @@ func addToCartHandler(w http.ResponseWriter, r *http.Request) {
 	db.Save(&existingProduct)
 	w.WriteHeader(http.StatusOK)
 }
-//remove product to cart
+
+// remove product to cart
 func removeFromCartHandler(w http.ResponseWriter, r *http.Request) {
 	var product Menu
 	if err := json.NewDecoder(r.Body).Decode(&product); err != nil {
@@ -126,7 +137,7 @@ func clearCartHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-//place order
+// place order
 func placeOrderHandler(w http.ResponseWriter, r *http.Request) {
 	var total float64
 	var cartItems []Cart
@@ -146,4 +157,35 @@ func placeOrderHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(summary)
+}
+
+func payHandler(w http.ResponseWriter, r *http.Request) {
+	var cartItems []Cart
+	db.Find(&cartItems)
+
+	for _, item := range cartItems {
+		order := Order{
+			Product:  item.Product,
+			Price:    item.Price,
+			Quantity: item.Quantity,
+		}
+		db.Create(&order)
+	}
+
+	db.Delete(&cartItems)
+
+	for _, item := range cartItems {
+		var menu Menu
+		db.Where("product = ?", item.Product).First(&menu)
+		menu.Quantity -= item.Quantity
+		db.Save(&menu)
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func getSoldHandler(w http.ResponseWriter, r *http.Request) {
+	var order []Order
+	db.Find(&order)
+	json.NewEncoder(w).Encode(order)
 }

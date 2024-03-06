@@ -9,18 +9,19 @@
 
 <body>
     <h1>Order Summary</h1>
-        <table>
-            <thead>
-                <tr>
-                    <th>Product</th>
-                    <th>Price</th>
-                    <th>Quantity</th>
-                </tr>
-            </thead>
-            <tbody id="order-items"></tbody>
-        </table>
-        <p>Total: <span id="total-price"></span></p>
-        <a href="cart.html"><button>Back to Cart</button></a>
+    <table>
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Quantity</th>
+            </tr>
+        </thead>
+        <tbody id="order-items"></tbody>
+    </table>
+    <p>Total: <span id="total-price"></span></p>
+    <a href="cart.html"><button>Back to Cart</button></a>
+    <a href="menu.html"><button onclick="pay()">Pay</button></a>
 
     <script>
         function placeOrder() {
@@ -58,6 +59,22 @@
                 })
                 .catch(error => console.error('Error fetching cart:', error));
         }
+
+        function pay() {
+            fetch('http://localhost:9000/pay', {
+                method: 'POST',
+            })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Pay successful!');
+                        window.location.reload();
+                    } else {
+                        console.error('Error paying:', response.statusText);
+                    }
+                })
+                .catch(error => console.error('Error paying:', error));
+        }
+
 
         document.addEventListener("DOMContentLoaded", function () {
             placeOrder();

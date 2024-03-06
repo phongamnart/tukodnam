@@ -90,7 +90,7 @@ func addToCartHandler(w http.ResponseWriter, r *http.Request) {
 	db.Save(&existingProduct)
 	w.WriteHeader(http.StatusOK)
 }
-
+//remove product to cart
 func removeFromCartHandler(w http.ResponseWriter, r *http.Request) {
 	var product Menu
 	if err := json.NewDecoder(r.Body).Decode(&product); err != nil {

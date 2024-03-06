@@ -20,6 +20,18 @@
         </thead>
         <tbody id="menu-list"></tbody>
     </table><br><br>
+    <h1>Cart</h1>
+    <table id="cart-table">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Quantity</th>
+            </tr>
+        </thead>
+        <tbody id="cart-list"></tbody>
+    </table><br><br>
+    <a href="order.html"><button onclick="placeOrder()">Order</button></a><br><br>
     <a href="cart.html"><button>Cart</button></a>
     <a href="sold.html"><button>Sold</button></a>
     <script>
@@ -67,7 +79,6 @@
                         <td>${item.Product}</td>
                         <td>${item.Price}</td>
                         <td>${item.Quantity}</td>
-                        <td><button onclick="removeFromCart('${item.Product}', ${rowToRemove})">Remove</button></td>
                     `;
                             cartList.appendChild(row);
                         });
@@ -104,6 +115,7 @@
 
         document.addEventListener("DOMContentLoaded", function () {
             getMenus();
+            getCart();
         });
     </script>
 </body>
